@@ -1,0 +1,1 @@
+"..\user\main.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(..\user\bsp_lcd;..\user\bsp_motor;..\user) DEBUG OBJECTEXTEND PRINT(..\main.lst) TABS (2) OBJECT(..\main.obj)

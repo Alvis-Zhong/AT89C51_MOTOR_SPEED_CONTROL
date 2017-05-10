@@ -1,0 +1,167 @@
+C51 COMPILER V9.54   BSP_MOTOR                                                             05/09/2017 21:04:53 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE BSP_MOTOR
+OBJECT MODULE PLACED IN ..\output\bsp_motor.obj
+COMPILER INVOKED BY: D:\KEIL5_C51\C51\BIN\C51.EXE ..\user\bsp_motor\bsp_motor.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\user\
+                    -bsp_lcd;..\user\bsp_motor;..\user) DEBUG OBJECTEXTEND PRINT(..\bsp_motor.lst) TABS(2) OBJECT(..\output\bsp_motor.obj)
+
+line level    source
+
+   1          /*******************************************************************
+   2            ************************************************************
+   3            *
+   4            *@file     bsp_motor.c
+   5            *@author   Bin
+   6            *@data     2017.05
+   7            *@brief    按键控制电机驱动文件
+   8            *
+   9            *************************************************************
+  10          *********************************************************************/
+  11          
+  12          #include "bsp_motor.h"
+  13          
+  14          sbit IN2=P2^6;
+  15          sbit IN1=P2^5;
+  16          
+  17          uchar number=20;            
+  18          uchar speed_motor=20;
+  19          bit flag=1;
+  20          
+  21          /****************************************************************************************
+  22            *@brief   软件延时函数，单位为ms
+  23            *@param   形参ms用于设置延时的长短
+  24            *@retvel  无
+  25          *****************************************************************************************/
+  26          void delay_ms(uint ms)
+  27          {
+  28   1        uchar i; 
+  29   1        while(ms--)
+  30   1        {
+  31   2          for(i=0;i<120;i++); 
+  32   2        }
+  33   1      } 
+  34          
+  35          /****************************************************************************************
+  36            *@brief   按键检测函数
+  37            *@param   无
+  38            *@retvel  返回值的按键的状态
+  39          *****************************************************************************************/
+  40          uchar key_check()
+  41          {
+  42   1        uchar temp=0x00;
+  43   1        uint i ; 
+  44   1        if( KEY!=0xff )           //检测按键是否按下
+  45   1        {
+  46   2          for(i=0;i<10;i++) ;     //按键消抖
+  47   2          if(KEY!=0xff)
+  48   2          {
+  49   3            temp = KEY ;          //保存按键状态值
+  50   3            if( KEY!=0xff )       //等待按键松开
+  51   3            {
+  52   4              for(i=0;i<10;i++); 
+  53   4            }
+  54   3          }
+C51 COMPILER V9.54   BSP_MOTOR                                                             05/09/2017 21:04:53 PAGE 2   
+
+  55   2        }
+  56   1        return temp;              //返回按键状态值
+  57   1      }
+  58          
+  59          /****************************************************************************************
+  60            *@brief   按键状态处理函数
+  61            *@param   temp是按键的状态，根据该状态进行相关的按键控制电机操作
+  62            *@retvel  返回值speed_motor是PWM波的控制变量
+  63          *****************************************************************************************/
+  64          uchar status_deal(uchar temp)
+  65          {
+  66   1        uchar status;
+  67   1        status=temp; 
+  68   1        switch(status)                  //对按键检测到的按键值进行判断
+  69   1        {
+  70   2          case 0xfe:                    //P1.0引脚的按键按下，增加PWM波的占空比
+  71   2          {
+  72   3            if(++number>95)           
+  73   3            {
+  74   4              number=95 ;
+  75   4            }
+  76   3            speed_motor=number;
+  77   3            break ; 
+  78   3          }
+  79   2          case 0xfd:                    //P1.1引脚的按键按下,减小PWM波的占空比
+  80   2          {
+  81   3            if((--number)<=1)           
+  82   3            {
+  83   4              number=1;
+  84   4            }
+  85   3            speed_motor=number-1;       
+  86   3            break ; 
+  87   3          }
+  88   2          case 0xfb:                    //P1.2引脚的按键按下，改变电机的转动方向
+  89   2          {
+  90   3            flag=~flag;
+  91   3            break;
+  92   3          }
+  93   2          case 0xf7:                    //P1.3引脚的按键按下，进行电机的停止
+  94   2          {
+  95   3            speed_motor=0;
+  96   3            number=1;
+  97   3            break;
+  98   3          }
+  99   2        }
+ 100   1        return speed_motor ;            //返回控制PWM波的占空比变量
+ 101   1      }
+ 102          
+ 103          /****************************************************************************************
+ 104            *@brief   PWM波的控制函数
+ 105            *@param   number是改变PWM波占空比的变量值
+ 106            *@retvel  无
+ 107          *****************************************************************************************/
+ 108          void pwm_control(uchar number)
+ 109          {
+ 110   1        if(flag)                      //根据P1.2按键的状态来控制电机的转动方向
+ 111   1          {
+ 112   2            IN2=0;
+ 113   2            IN1=1;
+ 114   2            delay_ms(number);
+ 115   2            IN1=0;
+ 116   2            delay_ms(95-number);
+C51 COMPILER V9.54   BSP_MOTOR                                                             05/09/2017 21:04:53 PAGE 3   
+
+ 117   2          }
+ 118   1        else
+ 119   1          {
+ 120   2            IN1=0;
+ 121   2            IN2=1;
+ 122   2            delay_ms(number);
+ 123   2            IN2=0;
+ 124   2            delay_ms(95-number);
+ 125   2          }
+ 126   1      }
+ 127          
+ 128          /****************************************************************************************
+ 129            *@brief   综合上述函数，实现按键控制电机的操作函数
+ 130            *@param   无
+ 131            *@retvel  无
+ 132          *****************************************************************************************/
+ 133          void key_con()
+ 134          {
+ 135   1        pwm_control(status_deal(key_check()));
+ 136   1      }
+ 137          
+ 138          
+ 139          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    194    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

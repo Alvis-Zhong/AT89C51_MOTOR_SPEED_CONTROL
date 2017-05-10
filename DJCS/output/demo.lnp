@@ -1,0 +1,5 @@
+"..\output\bsp_lcd1602.obj",
+"..\output\bsp_motor.obj",
+"..\output\main.obj" 
+TO "..\output\demo" 
+PRINT("..\demo.m51")

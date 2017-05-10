@@ -1,0 +1,99 @@
+C51 COMPILER V9.54   MAIN                                                                  05/09/2017 20:51:29 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN ..\output\main.obj
+COMPILER INVOKED BY: D:\KEIL5_C51\C51\BIN\C51.EXE ..\user\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\user\bsp_lcd;..\user
+                    -\bsp_motor;..\user) DEBUG OBJECTEXTEND PRINT(..\main.lst) TABS(2) OBJECT(..\output\main.obj)
+
+line level    source
+
+   1          /*******************************************************************
+   2            ************************************************************
+   3            *
+   4            *@file     main.c
+   5            *@author   Bin
+   6            *@data     2017.05
+   7            *@brief    主函数
+   8            *
+   9            *************************************************************
+  10          *********************************************************************/
+  11          
+  12          #include <reg51.h>
+  13          
+  14          #include "stdio.h"
+  15          #include "bsp_lcd1602.h"
+  16          #include "bsp_motor.h"
+  17          
+  18          sbit ENA=P2^4;            //对L298芯片使能
+  19          
+  20          float sum = 0;
+  21          float speed; 
+  22          
+  23          uint hex; 
+  24          uint num=0;
+  25          
+  26          uchar buff[16]; 
+  27          
+  28          void timerinit();         //定时器和计数器的初始化函数
+  29          
+  30          int main()
+  31          {
+  32   1        lcd_init();             //LCD初始化
+  33   1        timerinit();            //定时器和计数器相关配置寄存器的初始化函数
+  34   1        ENA=1;                  //打开L298的使能引脚之一
+  35   1        P1=0xff;                //P1口初始化
+  36   1        while(1)
+  37   1        {
+  38   2          key_con();            //电机控制
+  39   2        }
+  40   1      }
+  41          
+  42          /*  50ms产生一次中断  */
+  43          void timerinit()
+  44          {
+  45   1        TMOD = 0x41;            //定时器/计数器0设置为定时器模式，定时器/计数器1设置为计数器模式
+  46   1        TH0=(65536-50000)/256;  
+  47   1        TL0=(65536-50000)%256; 
+  48   1        TH1=0x00; 
+  49   1        TL1=0x00; 
+  50   1        TR0=1;
+  51   1        TR1=1; 
+  52   1        ET0=1; 
+  53   1        EA =1;
+  54   1      }
+C51 COMPILER V9.54   MAIN                                                                  05/09/2017 20:51:29 PAGE 2   
+
+  55          
+  56          /*  定时器中断函数  */
+  57          void timer0(void) interrupt 1
+  58          {
+  59   1        TH0 = (65536-50000)/256; 
+  60   1        TL0 = (65536-50000)%256;
+  61   1        num++ ; 
+  62   1        if(num==20)                                     //电机转速1s更新一次
+  63   1        {
+  64   2          hex=TH1*32+TL1;
+  65   2          speed=(int)(hex/22.93*60);                    //速度转换函数
+  66   2          sprintf(buff,"speed:%5.2f         ",speed);   //向buff中写入需要现实的字符
+  67   2          display(0,1,buff);                            //LCD显示
+  68   2          num=0;
+  69   2          TH1=0;
+  70   2          TL1=0;
+  71   2        }
+  72   1        TF0=0;                                          //关闭中断
+  73   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    235    ----
+   CONSTANT SIZE    =     21    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     28    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
